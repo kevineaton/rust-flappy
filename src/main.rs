@@ -9,6 +9,7 @@ const FRAME_DURATION: f32 = 75.0;
 enum GameMode {
     Menu,
     Playing,
+    Paused,
     End,
 }
 
@@ -42,6 +43,9 @@ impl State {
         }
         if let Some(VirtualKeyCode::Space) = ctx.key {
             self.player.flap();
+        }
+        if let Some(VirtualKeyCode::Escape) = ctx.key {
+            self.mode = GameMode::Paused;
         }
         self.player.render(ctx);
         ctx.print(0, 0, "Press SPACE to flap");
@@ -80,6 +84,22 @@ impl State {
         self.mode = GameMode::Playing;
     }
 
+    fn paused(&mut self, ctx: &mut BTerm) {
+        ctx.cls();
+        ctx.print_centered(5, "PAUSED");
+        ctx.print_centered(7, &format!("Score: {}", self.score));
+        ctx.print_centered(9, "(P) Play");
+        ctx.print_centered(11, "(Q) Quit");
+
+        if let Some(key) = ctx.key {
+            match key {
+                VirtualKeyCode::P => self.mode = GameMode::Playing,
+                VirtualKeyCode::Q => ctx.quitting = true,
+                _ => {}
+            }
+        }
+    }
+
     fn dead(&mut self, ctx: &mut BTerm) {
         ctx.cls();
         ctx.print_centered(5, "You lost!");
@@ -104,6 +124,7 @@ impl GameState for State {
             GameMode::Menu => self.main_menu(ctx),
             GameMode::End => self.dead(ctx),
             GameMode::Playing => self.play(ctx),
+            GameMode::Paused => self.paused(ctx),
         }
     }
 }
